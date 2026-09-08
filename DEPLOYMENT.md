@@ -13,6 +13,7 @@ SECRET_KEY=replace-with-a-long-random-production-secret
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
 DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE
 BACKEND_CORS_ORIGINS=https://your-frontend-domain.com
+BACKEND_CORS_ORIGIN_REGEX=
 CRAWLER_TIMEOUT_SECONDS=10
 CRAWLER_MAX_REDIRECTS=5
 CRAWLER_MAX_RESPONSE_BYTES=1000000
@@ -65,6 +66,14 @@ alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
 Set `DATABASE_URL` to a production PostgreSQL database URL.
+
+For the first Vercel deployment, you can temporarily set:
+
+```env
+BACKEND_CORS_ORIGIN_REGEX=https://.*\.vercel\.app
+```
+
+After launch, replace it with the exact production frontend URL in `BACKEND_CORS_ORIGINS`.
 
 ## Frontend Deployment
 

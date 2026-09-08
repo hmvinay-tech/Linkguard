@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24 * 7
     database_url: str = "sqlite:///./linkguard.db"
     backend_cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
+    backend_cors_origin_regex: str | None = None
     crawler_timeout_seconds: float = 10.0
     crawler_max_redirects: int = 5
     crawler_max_response_bytes: int = 1_000_000
