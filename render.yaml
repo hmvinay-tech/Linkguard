@@ -2,7 +2,7 @@ services:
   - type: web
     name: linkguard-api
     runtime: docker
-    plan: 0.5c-512mb
+    plan: free
     branch: main
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
@@ -52,6 +52,6 @@ services:
 
 databases:
   - name: linkguard-db
-    plan: 0.1c-256mb
+    plan: free
     region: oregon
     postgresMajorVersion: "18"

@@ -67,6 +67,8 @@ alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
 Set `DATABASE_URL` to a production PostgreSQL database URL.
 
+The included `render.yaml` uses Render's free web service and free Postgres plans for testing. Free services can sleep after idle time, and free Postgres expires after 30 days, so upgrade those plans before relying on LinkGuard for always-on public monitoring.
+
 For the first Vercel deployment, you can temporarily set:
 
 ```env
