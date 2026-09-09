@@ -76,6 +76,7 @@ BACKEND_CORS_ORIGIN_REGEX=https://.*\.vercel\.app
 ```
 
 After launch, replace it with the exact production frontend URL in `BACKEND_CORS_ORIGINS`.
+This test deployment uses `https://linkguard-two.vercel.app`.
 
 ## Frontend Deployment
 

@@ -20,9 +20,9 @@ services:
           name: linkguard-db
           property: connectionString
       - key: BACKEND_CORS_ORIGINS
-        value: http://localhost:5173,http://127.0.0.1:5173
+        value: https://linkguard-two.vercel.app,http://localhost:5173,http://127.0.0.1:5173
       - key: BACKEND_CORS_ORIGIN_REGEX
-        value: https://.*\.vercel\.app
+        value: https://linkguard-two\.vercel\.app
       - key: SCHEDULED_SCANS_ENABLED
         value: true
       - key: SCHEDULED_SCAN_MINUTES
