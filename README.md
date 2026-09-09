@@ -4,14 +4,23 @@ LinkGuard is a Personal Web Presence Monitor for resumes, portfolios, GitHub pro
 
 It checks whether important professional URLs are healthy, redirected, unreachable, or broken, then turns the result into a simple Professional Presence Health Score.
 
+## Live Demo
+
+- App: https://linkguard-two.vercel.app/
+- API: https://linkguard-api-ocnq.onrender.com
+
+Note: the current demo uses free hosting, so the backend may take extra time to wake up after inactivity.
+
 ## Features
 
 - Add, edit, delete, and categorize professional URLs
 - Scan one URL or all active URLs
 - Detect healthy pages, 404s, server errors, timeouts, excessive redirects, request failures, and restricted pages
-- Store resources, scan history, and issues in SQLite
+- Store users, resources, scan history, issues, and notifications
 - Automatically create open issues for warning and critical scan results
 - Automatically resolve issues when a later scan becomes healthy
+- Run scheduled monitoring while the backend is awake
+- Send in-app notifications, with email/SMS alert hooks for configured providers
 - Calculate a transparent health score
 - Protect the crawler from localhost, private IP, link-local, reserved, and metadata URLs
 - React dashboard connected to the FastAPI backend
@@ -20,7 +29,7 @@ It checks whether important professional URLs are healthy, redirected, unreachab
 
 - Frontend: React, Vite, CSS, lucide-react icons
 - Backend: FastAPI, Python, HTTPX, SQLAlchemy
-- Database: SQLite for MVP, PostgreSQL-ready architecture
+- Database: SQLite locally, PostgreSQL in production
 - Testing: pytest and unittest
 
 ## Project Structure
@@ -157,9 +166,7 @@ URL input -> crawler -> database -> issue engine -> health score -> dashboard
 ## Next Improvements
 
 - Google OAuth login
-- PostgreSQL deployment database
-- APScheduler scheduled scans
-- Email notifications
 - GitHub API integration
 - README and portfolio content comparison
 - AI assistant for suggested profile updates
+- Paid always-on backend hosting for serious public monitoring
