@@ -49,6 +49,12 @@ services:
         sync: false
       - key: SMS_WEBHOOK_TOKEN
         sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_PHONE
+        sync: false
 
 databases:
   - name: linkguard-db

@@ -27,6 +27,9 @@ ALERT_FROM_EMAIL=
 ALERT_TO_EMAIL=
 SMS_WEBHOOK_URL=
 SMS_WEBHOOK_TOKEN=
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_FROM_PHONE=
 ```
 
 Frontend:
@@ -121,8 +124,24 @@ alembic revision --autogenerate -m "describe change"
 - Scheduled scans run automatically when `SCHEDULED_SCANS_ENABLED=true`.
 - Every warning or critical issue creates an in-app notification for the user.
 - SMTP issue alerts are sent to each user's notification email when SMTP variables are configured.
-- SMS alerts are sent to each user's phone number when `SMS_WEBHOOK_URL` is configured.
+- SMS alerts are sent to each user's phone number when Twilio or `SMS_WEBHOOK_URL` is configured.
 - Automatic monitoring runs while the backend process is awake; choose a deployment host that does not sleep for true always-on monitoring.
+
+## SMS Alerts
+
+Recommended provider: Twilio.
+
+Set these backend environment variables:
+
+```env
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_FROM_PHONE=+15551234567
+```
+
+Users must also save their phone number in international format, for example `+15551234567`, and enable SMS alerts in the LinkGuard Monitoring panel.
+
+LinkGuard will use Twilio first when these variables are configured. If Twilio is not configured, it falls back to the custom webhook below.
 
 ## SMS Webhook Contract
 

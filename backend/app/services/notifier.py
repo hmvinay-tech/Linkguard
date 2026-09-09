@@ -37,10 +37,37 @@ def send_issue_alert(resource_name: str, resource_url: str, severity: str, messa
 
 
 def send_issue_sms(resource_name: str, resource_url: str, severity: str, message: str, recipient_phone: str | None) -> bool:
-    if not all([settings.sms_webhook_url, recipient_phone]):
+    if not recipient_phone:
         return False
 
     sms_message = f"LinkGuard {severity}: {resource_name} needs attention. {resource_url} - {message}"
+    if _send_twilio_sms(recipient_phone, sms_message):
+        return True
+    return _send_webhook_sms(recipient_phone, sms_message)
+
+
+def _send_twilio_sms(recipient_phone: str, sms_message: str) -> bool:
+    if not all([settings.twilio_account_sid, settings.twilio_auth_token, settings.twilio_from_phone]):
+        return False
+
+    response = httpx.post(
+        f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Messages.json",
+        data={
+            "To": recipient_phone,
+            "From": settings.twilio_from_phone,
+            "Body": sms_message,
+        },
+        auth=(settings.twilio_account_sid, settings.twilio_auth_token),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return True
+
+
+def _send_webhook_sms(recipient_phone: str, sms_message: str) -> bool:
+    if not settings.sms_webhook_url:
+        return False
+
     headers = {}
     if settings.sms_webhook_token:
         headers["Authorization"] = f"Bearer {settings.sms_webhook_token}"

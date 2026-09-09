@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     alert_to_email: str | None = None
     sms_webhook_url: str | None = None
     sms_webhook_token: str | None = None
+    twilio_account_sid: str | None = None
+    twilio_auth_token: str | None = None
+    twilio_from_phone: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
