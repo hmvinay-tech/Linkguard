@@ -50,6 +50,17 @@ def _send_twilio_sms(recipient_phone: str, sms_message: str) -> bool:
     if not all([settings.twilio_account_sid, settings.twilio_auth_token, settings.twilio_from_phone]):
         return False
 
+    try:
+        _post_twilio_sms(recipient_phone, sms_message)
+    except httpx.HTTPStatusError as error:
+        if _is_twilio_trial_template_error(error):
+            _post_twilio_sms(recipient_phone, "sms_account_alerts")
+        else:
+            raise
+    return True
+
+
+def _post_twilio_sms(recipient_phone: str, sms_message: str) -> None:
     response = httpx.post(
         f"https://api.twilio.com/2010-04-01/Accounts/{settings.twilio_account_sid}/Messages.json",
         data={
@@ -61,7 +72,13 @@ def _send_twilio_sms(recipient_phone: str, sms_message: str) -> bool:
         timeout=10,
     )
     response.raise_for_status()
-    return True
+
+
+def _is_twilio_trial_template_error(error: httpx.HTTPStatusError) -> bool:
+    try:
+        return error.response.json().get("code") == 572006
+    except ValueError:
+        return False
 
 
 def _send_webhook_sms(recipient_phone: str, sms_message: str) -> bool:

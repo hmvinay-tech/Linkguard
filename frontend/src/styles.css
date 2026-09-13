@@ -544,6 +544,10 @@ button:disabled {
   padding: 12px 14px;
 }
 
+.global-message {
+  margin: 0 clamp(18px, 5vw, 56px) 22px;
+}
+
 .resource-list,
 .issue-list {
   display: grid;

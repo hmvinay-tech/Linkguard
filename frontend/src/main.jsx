@@ -448,6 +448,8 @@ function App() {
         </div>
       </section>
 
+      {message && <p className="message global-message">{message}</p>}
+
       <section className="dashboard-grid">
         <div className="score-panel">
           <div className="panel-heading">
@@ -679,8 +681,6 @@ function App() {
               ))}
             </select>
           </div>
-
-          {message && <p className="message">{message}</p>}
 
           <div className="resource-list">
             {resources.length === 0 && <div className="empty-state">Add your first professional link to begin monitoring.</div>}
