@@ -1,0 +1,18 @@
+name: Scheduled LinkGuard Scan
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  scan-due-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger due link scans
+        run: |
+          curl --fail-with-body --show-error --silent \
+            --request POST \
+            --header "X-LinkGuard-Job-Token: ${{ secrets.LINKGUARD_SCAN_JOB_TOKEN }}" \
+            "${{ secrets.LINKGUARD_BACKEND_URL }}/api/admin/scan-due"

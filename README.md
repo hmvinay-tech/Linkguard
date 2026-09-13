@@ -20,6 +20,7 @@ Note: the current demo uses free hosting, so the backend may take extra time to 
 - Automatically create open issues for warning and critical scan results
 - Automatically resolve issues when a later scan becomes healthy
 - Run scheduled monitoring while the backend is awake
+- Trigger due scans from GitHub Actions for free hosted deployments
 - Send in-app notifications, with email/SMS alert hooks for configured providers
 - Calculate a transparent health score
 - Protect the crawler from localhost, private IP, link-local, reserved, and metadata URLs
@@ -108,6 +109,7 @@ Deployment-ready config is included:
 - Local full-stack Docker setup is available with `docker-compose.yml`
 - Signup/login and account-scoped resources are included for public demo use
 - Automatic monitoring creates in-app notifications and can send per-user email/SMS alerts
+- Free external scans can be triggered by `.github/workflows/scheduled-linkguard-scan.yml`
 
 See `DEPLOYMENT.md` and `PRODUCTION_CHECKLIST.md` for environment variables and hosting steps.
 
@@ -127,6 +129,8 @@ DELETE /api/resources/{id}
 POST   /api/resources/{id}/scan
 POST   /api/resources/scan-all
 GET    /api/resources/{id}/scans
+
+POST   /api/admin/scan-due
 ```
 
 ## Health Scoring
@@ -170,3 +174,7 @@ URL input -> crawler -> database -> issue engine -> health score -> dashboard
 - README and portfolio content comparison
 - AI assistant for suggested profile updates
 - Paid always-on backend hosting for serious public monitoring
+
+## Free Hosting Limits
+
+The included GitHub Actions workflow can wake the free backend and trigger due scans every 15 minutes. This is the best no-cost workaround for MVP monitoring, but it is not the same as paid always-on hosting: GitHub scheduled jobs can be delayed, skipped during platform issues, or paused if the repository becomes inactive. Twilio trial SMS also expires and restricts message content, so use email/in-app alerts for free long-term testing.

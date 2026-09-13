@@ -19,6 +19,7 @@ CRAWLER_MAX_REDIRECTS=5
 CRAWLER_MAX_RESPONSE_BYTES=1000000
 SCHEDULED_SCANS_ENABLED=true
 SCHEDULED_SCAN_MINUTES=15
+SCHEDULED_SCAN_JOB_TOKEN=replace-with-a-long-random-job-secret
 SMTP_HOST=
 SMTP_PORT=587
 SMTP_USERNAME=
@@ -81,6 +82,30 @@ BACKEND_CORS_ORIGIN_REGEX=https://.*\.vercel\.app
 After launch, replace it with the exact production frontend URL in `BACKEND_CORS_ORIGINS`.
 This test deployment uses `https://linkguard-two.vercel.app`.
 
+## Free External Scheduled Scans
+
+For a no-cost MVP deployment, use GitHub Actions to wake the backend and trigger due scans even when no user has the website open.
+
+1. Generate a long random secret value.
+2. Add the same value to Render as:
+
+```env
+SCHEDULED_SCAN_JOB_TOKEN=your-long-random-job-secret
+```
+
+3. Add these GitHub repository secrets:
+
+```env
+LINKGUARD_BACKEND_URL=https://linkguard-api-ocnq.onrender.com
+LINKGUARD_SCAN_JOB_TOKEN=your-long-random-job-secret
+```
+
+4. Confirm `.github/workflows/scheduled-linkguard-scan.yml` is enabled in GitHub Actions.
+
+The workflow calls `POST /api/admin/scan-due` every 15 minutes and can also be run manually from the Actions tab.
+
+Free limitation: GitHub scheduled workflows are best effort and can be delayed. This is useful for testing and small demos, but it is not a paid uptime guarantee.
+
 ## Frontend Deployment
 
 Good hosts for the React frontend:
@@ -126,6 +151,7 @@ alembic revision --autogenerate -m "describe change"
 - SMTP issue alerts are sent to each user's notification email when SMTP variables are configured.
 - SMS alerts are sent to each user's phone number when Twilio or `SMS_WEBHOOK_URL` is configured.
 - Automatic monitoring runs while the backend process is awake; choose a deployment host that does not sleep for true always-on monitoring.
+- The GitHub Actions scan workflow can trigger due scans on a free schedule when `SCHEDULED_SCAN_JOB_TOKEN` and repository secrets are configured.
 
 ## SMS Alerts
 
@@ -142,6 +168,8 @@ TWILIO_FROM_PHONE=+15551234567
 Users must also save their phone number in international format, for example `+15551234567`, and enable SMS alerts in the LinkGuard Monitoring panel.
 
 LinkGuard will use Twilio first when these variables are configured. If Twilio is not configured, it falls back to the custom webhook below.
+
+Twilio trial limitation: trial accounts may require predefined template bodies and stop after the trial ends. LinkGuard retries Twilio trial template errors with `sms_account_alerts` so delivery can be tested, but custom LinkGuard SMS text requires a production Twilio account.
 
 ## SMS Webhook Contract
 

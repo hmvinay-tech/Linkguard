@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     demo_seed_enabled: bool = True
     scheduled_scans_enabled: bool = True
     scheduled_scan_minutes: int = 15
+    scheduled_scan_job_token: str | None = None
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_username: str | None = None

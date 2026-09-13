@@ -27,6 +27,8 @@ services:
         value: true
       - key: SCHEDULED_SCAN_MINUTES
         value: 15
+      - key: SCHEDULED_SCAN_JOB_TOKEN
+        sync: false
       - key: CRAWLER_TIMEOUT_SECONDS
         value: 10
       - key: CRAWLER_MAX_REDIRECTS

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_db
-from app.routes import auth, dashboard, resources
+from app.routes import admin, auth, dashboard, resources
 from app.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(title=settings.app_name)
@@ -20,6 +20,7 @@ app.add_middleware(
 app.include_router(resources.router, prefix=settings.api_prefix)
 app.include_router(dashboard.router, prefix=settings.api_prefix)
 app.include_router(auth.router, prefix=settings.api_prefix)
+app.include_router(admin.router, prefix=settings.api_prefix)
 
 
 @app.on_event("startup")
