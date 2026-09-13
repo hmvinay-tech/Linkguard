@@ -147,6 +147,7 @@ button:disabled {
 .ghost-button,
 .icon-button,
 .danger-button,
+.danger-action,
 .outline-link,
 .category-chip {
   border: 0;
@@ -159,6 +160,7 @@ button:disabled {
 .ghost-button:hover,
 .icon-button:hover,
 .danger-button:hover,
+.danger-action:hover,
 .outline-link:hover,
 .category-chip:hover {
   transform: translateY(-1px);
@@ -198,6 +200,18 @@ button:disabled {
 .danger-button {
   background: #ffe1e1;
   color: #b42318;
+}
+
+.danger-action {
+  align-items: center;
+  background: #b42318;
+  color: #ffffff;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  white-space: nowrap;
 }
 
 .dashboard-grid {
@@ -355,11 +369,72 @@ button:disabled {
   padding: 0 clamp(18px, 5vw, 56px) 28px;
 }
 
+.help-band {
+  padding: 0 clamp(18px, 5vw, 56px) 28px;
+}
+
+.danger-zone {
+  padding: 0 clamp(18px, 5vw, 56px) 28px;
+}
+
+.danger-zone-body {
+  align-items: center;
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-top: 16px;
+  padding: 16px;
+}
+
+.danger-zone-body strong {
+  color: #7f1d1d;
+  font-size: 14px;
+}
+
+.danger-zone-body p {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 5px 0 0;
+}
+
 .system-grid {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-top: 16px;
+}
+
+.help-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.help-item {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(221, 228, 237, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 14px 35px rgba(16, 36, 51, 0.06);
+  display: grid;
+  gap: 8px;
+  min-height: 118px;
+  padding: 16px;
+}
+
+.help-item strong {
+  color: #17202a;
+  font-size: 14px;
+}
+
+.help-item span {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .status-item {
@@ -408,6 +483,14 @@ button:disabled {
   align-items: center;
   display: flex;
   gap: 10px;
+}
+
+.title-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 .unread-badge {
@@ -828,6 +911,7 @@ button:disabled {
 
 @media (max-width: 900px) {
   .dashboard-grid,
+  .help-grid,
   .system-grid,
   .work-grid {
     grid-template-columns: 1fr 1fr;
@@ -858,6 +942,7 @@ button:disabled {
 
 @media (max-width: 640px) {
   .dashboard-grid,
+  .help-grid,
   .system-grid,
   .work-grid,
   .link-toolbar {
@@ -886,6 +971,16 @@ button:disabled {
   .resource-row {
     align-items: start;
     grid-template-columns: 12px 1fr;
+  }
+
+  .danger-zone-body {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .danger-action {
+    justify-content: center;
+    width: 100%;
   }
 
   .resource-form {

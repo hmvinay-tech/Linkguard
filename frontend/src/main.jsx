@@ -6,9 +6,11 @@ import {
   Bell,
   CheckCircle2,
   Clock3,
+  Download,
   Edit3,
   ExternalLink,
   Gauge,
+  HelpCircle,
   Link,
   Loader2,
   LogOut,
@@ -253,6 +255,26 @@ function App() {
     }
   }
 
+  async function deleteAccount() {
+    const confirmed = window.confirm(
+      "Delete your LinkGuard account and all saved links, scan history, issues, and notifications? This cannot be undone."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await request("/auth/me", { method: "DELETE" });
+      logout();
+      setMessage("Account deleted. Your saved LinkGuard data was removed.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function seedDemo() {
     setBusy(true);
     try {
@@ -357,6 +379,36 @@ function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function exportLinks() {
+    if (resources.length === 0) {
+      setMessage("No links to export yet.");
+      return;
+    }
+
+    const headers = ["Name", "URL", "Category", "Description", "Active", "Last Status", "Last Scan"];
+    const rows = resources.map((resource) => {
+      const scan = latestScans.get(resource.id);
+      return [
+        resource.name,
+        resource.url,
+        resource.category,
+        resource.description || "",
+        resource.active === false ? "No" : "Yes",
+        scan?.classification || "unscanned",
+        scan?.scanned_at || "",
+      ];
+    });
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `linkguard-links-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setMessage("Links exported as CSV.");
   }
 
   function startEdit(resource) {
@@ -534,6 +586,62 @@ function App() {
           />
           <StatusItem label="Email alerts" ready={systemStatus?.email_configured} detail="SMTP setup" />
           <StatusItem label="SMS alerts" ready={systemStatus?.sms_configured} detail="Twilio/webhook setup" />
+        </div>
+      </section>
+
+      <section className="help-band">
+        <div className="section-title spread-title">
+          <div>
+            <HelpCircle size={20} />
+            <h1>Help</h1>
+          </div>
+          <span className="small-summary">How it works</span>
+        </div>
+        <div className="help-grid">
+          <HelpItem
+            title="What LinkGuard Checks"
+            text="It scans saved links for HTTP errors, redirects, SSL problems, response time, and broken destinations."
+          />
+          <HelpItem
+            title="Monitoring Schedule"
+            text="Your saved links are checked by the scheduled scan workflow. The free backend can sleep, so checks can be delayed."
+          />
+          <HelpItem
+            title="Alerts"
+            text="Choose one alert method: Email or SMS. Test the selected method before depending on it."
+          />
+          <HelpItem
+            title="Trial SMS"
+            text="Twilio trial accounts may send generic messages and usually work only for verified recipient phone numbers."
+          />
+          <HelpItem
+            title="Data Stored"
+            text="LinkGuard stores your account email, optional alert phone or email, saved links, scan results, and in-app notifications."
+          />
+          <HelpItem
+            title="Before Sharing"
+            text="Use System Status and test alerts first. For public daily usage, paid uptime and production SMS are still stronger."
+          />
+        </div>
+      </section>
+
+      <section className="danger-zone">
+        <div className="section-title spread-title">
+          <div>
+            <AlertTriangle size={20} />
+            <h1>Account Data</h1>
+          </div>
+          <span className="small-summary">Privacy control</span>
+        </div>
+        <div className="danger-zone-body">
+          <div>
+            <strong>Delete Account</strong>
+            <p>Remove your account, saved links, scan history, issues, and in-app notifications.</p>
+          </div>
+          <button className="danger-action" type="button" onClick={deleteAccount} disabled={busy}>
+            <Trash2 size={18} />
+            <span>Delete Account</span>
+          </button>
         </div>
       </section>
 
@@ -727,7 +835,13 @@ function App() {
               <Activity size={20} />
               <h1>My Links</h1>
             </div>
-            <span className="small-summary">{scanStatus.monitored} monitored</span>
+            <div className="title-actions">
+              <span className="small-summary">{scanStatus.monitored} monitored</span>
+              <button className="ghost-button" onClick={exportLinks} disabled={busy || resources.length === 0}>
+                <Download size={18} />
+                <span>Export Links</span>
+              </button>
+            </div>
           </div>
 
           <div className="link-toolbar">
@@ -836,6 +950,20 @@ function StatusItem({ label, ready, detail }) {
       </div>
     </div>
   );
+}
+
+function HelpItem({ title, text }) {
+  return (
+    <article className="help-item">
+      <strong>{title}</strong>
+      <span>{text}</span>
+    </article>
+  );
+}
+
+function csvCell(value) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
 }
 
 function HistoryChart({ scans }) {

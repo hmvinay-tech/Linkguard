@@ -2,13 +2,13 @@ import logging
 import smtplib
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import UserModel
 from app.schemas import TestEmailResponse, TestSmsResponse, TokenResponse, UserCreate, UserLogin, UserPublic, UserSettingsUpdate
-from app.services.auth import authenticate_user, create_user, get_current_user, update_user_settings
+from app.services.auth import authenticate_user, create_user, delete_user_account, get_current_user, update_user_settings
 from app.services.notifier import send_issue_alert, send_issue_sms
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -45,6 +45,15 @@ def update_me(
     db: Session = Depends(get_db),
 ) -> UserPublic:
     return update_user_settings(db, user, payload)
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_me(
+    user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    delete_user_account(db, user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/me/test-sms", response_model=TestSmsResponse)

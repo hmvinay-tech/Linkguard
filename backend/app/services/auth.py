@@ -7,12 +7,12 @@ import os
 import time
 
 from fastapi import Depends, Header, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import UserModel
+from app.models import IssueModel, NotificationModel, ResourceModel, ScanModel, UserModel
 from app.schemas import TokenResponse, UserCreate, UserLogin, UserPublic, UserSettingsUpdate
 
 AUTH_RATE_LIMIT_ATTEMPTS = 8
@@ -97,6 +97,21 @@ def update_user_settings(db: Session, user: UserModel, payload: UserSettingsUpda
     db.commit()
     db.refresh(user)
     return _user_public(user)
+
+
+def delete_user_account(db: Session, user: UserModel) -> None:
+    owner_key = owner_key_for_user(user)
+    resource_ids = list(db.scalars(select(ResourceModel.id).where(ResourceModel.owner_key == owner_key)).all())
+
+    if resource_ids:
+        db.execute(delete(ScanModel).where(ScanModel.resource_id.in_(resource_ids)))
+        db.execute(delete(IssueModel).where(IssueModel.resource_id.in_(resource_ids)))
+        db.execute(delete(NotificationModel).where(NotificationModel.resource_id.in_(resource_ids)))
+        db.execute(delete(ResourceModel).where(ResourceModel.id.in_(resource_ids)))
+
+    db.execute(delete(NotificationModel).where(NotificationModel.owner_key == owner_key))
+    db.delete(user)
+    db.commit()
 
 
 def create_access_token(user_id: int) -> str:
