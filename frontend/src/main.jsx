@@ -5,14 +5,18 @@ import {
   AlertTriangle,
   Bell,
   CheckCircle2,
+  Clock3,
   Edit3,
+  ExternalLink,
   Gauge,
   Link,
   Loader2,
   LogOut,
   Plus,
   RotateCw,
+  Search,
   ShieldCheck,
+  Sparkles,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -21,6 +25,15 @@ import "./styles.css";
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 const emptyForm = { name: "", url: "", category: "other", description: "" };
 const emptyAuth = { email: "", password: "" };
+const categories = [
+  { value: "resume", label: "Resume" },
+  { value: "portfolio", label: "Portfolio" },
+  { value: "github", label: "GitHub" },
+  { value: "project", label: "Project" },
+  { value: "certificate", label: "Certificate" },
+  { value: "social", label: "Social" },
+  { value: "other", label: "Other" },
+];
 
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem("linkguard-token") || "");
@@ -42,6 +55,8 @@ function App() {
   const [message, setMessage] = useState("");
   const [readmeText, setReadmeText] = useState("");
   const [scanHistory, setScanHistory] = useState([]);
+  const [filterText, setFilterText] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const notifications = dashboard?.recent_notifications ?? [];
   const unreadCount = notifications.filter((notification) => !notification.read).length;
 
@@ -56,6 +71,25 @@ function App() {
     }
     return map;
   }, [dashboard]);
+
+  const filteredResources = useMemo(() => {
+    const query = filterText.trim().toLowerCase();
+    return resources.filter((resource) => {
+      const categoryMatches = categoryFilter === "all" || resource.category === categoryFilter;
+      const textMatches =
+        !query ||
+        [resource.name, resource.url, resource.category, resource.description]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(query));
+      return categoryMatches && textMatches;
+    });
+  }, [resources, filterText, categoryFilter]);
+
+  const scanStatus = useMemo(() => {
+    const unscanned = resources.filter((resource) => !latestScans.has(resource.id)).length;
+    const monitored = resources.filter((resource) => resource.active !== false).length;
+    return { unscanned, monitored };
+  }, [resources, latestScans]);
 
   async function request(path, options = {}) {
     const response = await fetch(`${API_BASE}${path}`, {
@@ -365,6 +399,29 @@ function App() {
         </div>
       </header>
 
+      <section className="command-center">
+        <div>
+          <span className="eyebrow">
+            <Sparkles size={16} />
+            Live web presence monitor
+          </span>
+          <h1>Keep every important professional link launch-ready.</h1>
+          <p>
+            Track portfolios, resumes, project demos, profiles, and certificates from one focused dashboard.
+          </p>
+        </div>
+        <div className="command-actions">
+          <a className="outline-link" href="#add-resource">
+            <Plus size={18} />
+            <span>Add Link</span>
+          </a>
+          <button className="primary-button" onClick={scanAll} disabled={busy || resources.length === 0}>
+            {busy ? <Loader2 size={18} className="spin" /> : <RotateCw size={18} />}
+            <span>Scan All</span>
+          </button>
+        </div>
+      </section>
+
       <section className="dashboard-grid">
         <div className="score-panel">
           <div className="panel-heading">
@@ -378,6 +435,7 @@ function App() {
         <Metric icon={<Link size={18} />} label="Total" value={dashboard?.total_resources ?? resources.length} />
         <Metric icon={<CheckCircle2 size={18} />} label="Healthy" value={dashboard?.healthy ?? 0} />
         <Metric icon={<AlertTriangle size={18} />} label="Open Issues" value={issueCount} />
+        <Metric icon={<Clock3 size={18} />} label="Unscanned" value={scanStatus.unscanned} />
       </section>
 
       <section className="notifications-band">
@@ -494,7 +552,7 @@ function App() {
       </section>
 
       <section className="work-grid">
-        <form className="resource-form" onSubmit={saveResource}>
+        <form className="resource-form" id="add-resource" onSubmit={saveResource}>
           <div className="section-title">
             <Plus size={20} />
             <h1>{editingId ? "Edit Resource" : "Add Resource"}</h1>
@@ -518,15 +576,25 @@ function App() {
           <label>
             Category
             <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
-              <option value="resume">Resume</option>
-              <option value="portfolio">Portfolio</option>
-              <option value="github">GitHub</option>
-              <option value="project">Project</option>
-              <option value="certificate">Certificate</option>
-              <option value="social">Social</option>
-              <option value="other">Other</option>
+              {categories.map((category) => (
+                <option key={category.value} value={category.value}>
+                  {category.label}
+                </option>
+              ))}
             </select>
           </label>
+          <div className="chip-row" aria-label="Quick categories">
+            {categories.slice(0, 6).map((category) => (
+              <button
+                className={form.category === category.value ? "category-chip active" : "category-chip"}
+                key={category.value}
+                type="button"
+                onClick={() => setForm({ ...form, category: category.value })}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
 
           <label>
             Description
@@ -548,16 +616,41 @@ function App() {
         </form>
 
         <section className="content-band">
-          <div className="section-title">
-            <Activity size={20} />
-            <h1>My Links</h1>
+          <div className="section-title spread-title">
+            <div>
+              <Activity size={20} />
+              <h1>My Links</h1>
+            </div>
+            <span className="small-summary">{scanStatus.monitored} monitored</span>
+          </div>
+
+          <div className="link-toolbar">
+            <label className="search-field">
+              <Search size={17} />
+              <input
+                value={filterText}
+                onChange={(event) => setFilterText(event.target.value)}
+                placeholder="Search links"
+              />
+            </label>
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <option value="all">All categories</option>
+              {categories.map((category) => (
+                <option key={category.value} value={category.value}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           {message && <p className="message">{message}</p>}
 
           <div className="resource-list">
             {resources.length === 0 && <div className="empty-state">Add your first professional link to begin monitoring.</div>}
-            {resources.map((resource) => {
+            {resources.length > 0 && filteredResources.length === 0 && (
+              <div className="empty-state">No links match this filter.</div>
+            )}
+            {filteredResources.map((resource) => {
               const scan = latestScans.get(resource.id);
               const status = scan?.classification ?? "unscanned";
               return (
@@ -565,7 +658,13 @@ function App() {
                   <div className={`status-dot ${status}`} />
                   <div className="resource-main">
                     <h2>{resource.name}</h2>
-                    <p>{resource.category} - {resource.url}</p>
+                    <p>
+                      <span className="category-text">{resource.category}</span>
+                      <a href={resource.url} target="_blank" rel="noreferrer">
+                        {resource.url}
+                        <ExternalLink size={13} />
+                      </a>
+                    </p>
                     {scan && (
                       <div className="scan-meta">
                         <span>Status {scan.status_code ?? "n/a"}</span>
