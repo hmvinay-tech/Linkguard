@@ -1,4 +1,5 @@
 import logging
+import smtplib
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import UserModel
-from app.schemas import TestSmsResponse, TokenResponse, UserCreate, UserLogin, UserPublic, UserSettingsUpdate
+from app.schemas import TestEmailResponse, TestSmsResponse, TokenResponse, UserCreate, UserLogin, UserPublic, UserSettingsUpdate
 from app.services.auth import authenticate_user, create_user, get_current_user, update_user_settings
-from app.services.notifier import send_issue_sms
+from app.services.notifier import send_issue_alert, send_issue_sms
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
@@ -84,3 +85,36 @@ def send_test_sms(user: UserModel = Depends(get_current_user)) -> TestSmsRespons
         )
 
     return TestSmsResponse(status="sent")
+
+
+@router.post("/me/test-email", response_model=TestEmailResponse)
+def send_test_email(user: UserModel = Depends(get_current_user)) -> TestEmailResponse:
+    recipient = user.notification_email or user.email
+    if not user.notifications_enabled or not recipient:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Save an email address and enable email alerts first.",
+        )
+
+    try:
+        sent = send_issue_alert(
+            "Test alert",
+            "https://linkguard-two.vercel.app/",
+            "info",
+            "This is a LinkGuard test email. Your email alert setup is connected.",
+            recipient,
+        )
+    except (OSError, smtplib.SMTPException) as error:
+        logger.warning("Email provider request failed for test email: %s", error)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Email provider request failed. Check SMTP credentials and sender email.",
+        ) from error
+
+    if not sent:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email provider is not configured on the backend.",
+        )
+
+    return TestEmailResponse(status="sent")

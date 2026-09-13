@@ -155,3 +155,7 @@ class TokenResponse(BaseModel):
 
 class TestSmsResponse(BaseModel):
     status: str
+
+
+class TestEmailResponse(BaseModel):
+    status: str

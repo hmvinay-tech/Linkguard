@@ -12,6 +12,7 @@ import {
   Link,
   Loader2,
   LogOut,
+  Mail,
   Plus,
   RotateCw,
   Search,
@@ -326,6 +327,19 @@ function App() {
     }
   }
 
+  async function sendTestEmail() {
+    setBusy(true);
+    try {
+      await saveMonitoringSettings();
+      await request("/auth/me/test-email", { method: "POST" });
+      setMessage("Test email sent. If it does not arrive, check spam and SMTP provider logs.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function markNotificationsRead() {
     setBusy(true);
     try {
@@ -585,6 +599,15 @@ function App() {
             >
               <Send size={18} />
               <span>Send Test SMS</span>
+            </button>
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={sendTestEmail}
+              disabled={busy || !settingsForm.notifications_enabled || !settingsForm.notification_email.trim()}
+            >
+              <Mail size={18} />
+              <span>Send Test Email</span>
             </button>
           </div>
         </form>

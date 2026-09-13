@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
+import smtplib
 
 import httpx
 from fastapi import HTTPException
@@ -15,6 +16,16 @@ def sms_user(phone: str | None = "+15551112222", enabled: bool = True) -> UserMo
         password_hash="hash",
         notification_phone=phone,
         sms_notifications_enabled=enabled,
+    )
+
+
+def email_user(email: str = "test@example.com", notification_email: str | None = "alerts@example.com", enabled: bool = True) -> UserModel:
+    return UserModel(
+        id=1,
+        email=email,
+        password_hash="hash",
+        notification_email=notification_email,
+        notifications_enabled=enabled,
     )
 
 
@@ -56,6 +67,36 @@ class AuthRouteTests(unittest.TestCase):
 
         self.assertEqual(context.exception.status_code, 502)
         self.assertIn("Status 400", context.exception.detail)
+
+    @patch("app.routes.auth.send_issue_alert", return_value=True)
+    def test_send_test_email_succeeds(self, send_issue_alert: Mock) -> None:
+        response = auth.send_test_email(email_user())
+
+        self.assertEqual(response.status, "sent")
+        send_issue_alert.assert_called_once()
+
+    def test_send_test_email_requires_enabled_alerts(self) -> None:
+        with self.assertRaises(HTTPException) as context:
+            auth.send_test_email(email_user(enabled=False))
+
+        self.assertEqual(context.exception.status_code, 400)
+
+    @patch("app.routes.auth.send_issue_alert", return_value=False)
+    def test_send_test_email_reports_missing_provider_config(self, send_issue_alert: Mock) -> None:
+        with self.assertRaises(HTTPException) as context:
+            auth.send_test_email(email_user())
+
+        self.assertEqual(context.exception.status_code, 503)
+        send_issue_alert.assert_called_once()
+
+    @patch("app.routes.auth.send_issue_alert")
+    def test_send_test_email_reports_provider_failure(self, send_issue_alert: Mock) -> None:
+        send_issue_alert.side_effect = smtplib.SMTPException("bad smtp credentials")
+
+        with self.assertRaises(HTTPException) as context:
+            auth.send_test_email(email_user())
+
+        self.assertEqual(context.exception.status_code, 502)
 
 
 if __name__ == "__main__":
