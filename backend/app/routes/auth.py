@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends
+import logging
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import UserModel
-from app.schemas import TokenResponse, UserCreate, UserLogin, UserPublic, UserSettingsUpdate
+from app.schemas import TestSmsResponse, TokenResponse, UserCreate, UserLogin, UserPublic, UserSettingsUpdate
 from app.services.auth import authenticate_user, create_user, get_current_user, update_user_settings
+from app.services.notifier import send_issue_sms
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/signup", response_model=TokenResponse)
@@ -39,3 +44,43 @@ def update_me(
     db: Session = Depends(get_db),
 ) -> UserPublic:
     return update_user_settings(db, user, payload)
+
+
+@router.post("/me/test-sms", response_model=TestSmsResponse)
+def send_test_sms(user: UserModel = Depends(get_current_user)) -> TestSmsResponse:
+    if not user.sms_notifications_enabled or not user.notification_phone:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Save a phone number and enable SMS alerts first.",
+        )
+
+    try:
+        sent = send_issue_sms(
+            "Test alert",
+            "https://linkguard-two.vercel.app/",
+            "info",
+            "This is a LinkGuard test SMS. Your SMS alert setup is connected.",
+            user.notification_phone,
+        )
+    except httpx.HTTPStatusError as error:
+        response_text = error.response.text[:160] if error.response is not None else ""
+        provider_status = error.response.status_code if error.response else "unknown"
+        logger.warning("SMS provider rejected test SMS: %s %s", provider_status, response_text)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"SMS provider rejected the message. Check Twilio logs. Status {provider_status}.",
+        ) from error
+    except httpx.HTTPError as error:
+        logger.warning("SMS provider request failed for test SMS: %s", error)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="SMS provider request failed. Check Twilio credentials and sender number.",
+        ) from error
+
+    if not sent:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SMS provider is not configured on the backend.",
+        )
+
+    return TestSmsResponse(status="sent")

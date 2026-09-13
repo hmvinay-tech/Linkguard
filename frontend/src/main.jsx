@@ -15,6 +15,7 @@ import {
   Plus,
   RotateCw,
   Search,
+  Send,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -277,29 +278,47 @@ function App() {
     }
   }
 
+  async function saveMonitoringSettings() {
+    const updated = await request("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify({
+        notification_email: settingsForm.notification_email || null,
+        notification_phone: settingsForm.notification_phone || null,
+        notifications_enabled: settingsForm.notifications_enabled,
+        sms_notifications_enabled: settingsForm.sms_notifications_enabled,
+        scan_frequency_minutes: Number(settingsForm.scan_frequency_minutes),
+      }),
+    });
+    setUser(updated);
+    setSettingsForm({
+      notification_email: updated.notification_email || updated.email,
+      notification_phone: updated.notification_phone || "",
+      notifications_enabled: updated.notifications_enabled,
+      sms_notifications_enabled: updated.sms_notifications_enabled,
+      scan_frequency_minutes: updated.scan_frequency_minutes,
+    });
+    return updated;
+  }
+
   async function saveSettings(event) {
     event.preventDefault();
     setBusy(true);
     try {
-      const updated = await request("/auth/me", {
-        method: "PUT",
-        body: JSON.stringify({
-          notification_email: settingsForm.notification_email || null,
-          notification_phone: settingsForm.notification_phone || null,
-          notifications_enabled: settingsForm.notifications_enabled,
-          sms_notifications_enabled: settingsForm.sms_notifications_enabled,
-          scan_frequency_minutes: Number(settingsForm.scan_frequency_minutes),
-        }),
-      });
-      setUser(updated);
-      setSettingsForm({
-        notification_email: updated.notification_email || updated.email,
-        notification_phone: updated.notification_phone || "",
-        notifications_enabled: updated.notifications_enabled,
-        sms_notifications_enabled: updated.sms_notifications_enabled,
-        scan_frequency_minutes: updated.scan_frequency_minutes,
-      });
+      await saveMonitoringSettings();
       setMessage("Monitoring settings saved.");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendTestSms() {
+    setBusy(true);
+    try {
+      await saveMonitoringSettings();
+      await request("/auth/me/test-sms", { method: "POST" });
+      setMessage("Test SMS sent. If it does not arrive, check Twilio message logs and trial recipient verification.");
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -551,10 +570,21 @@ function App() {
               <option value="1440">1 day</option>
             </select>
           </label>
-          <button className="primary-button" type="submit" disabled={busy}>
-            <CheckCircle2 size={18} />
-            <span>Save Monitoring</span>
-          </button>
+          <div className="form-actions">
+            <button className="primary-button" type="submit" disabled={busy}>
+              <CheckCircle2 size={18} />
+              <span>Save Monitoring</span>
+            </button>
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={sendTestSms}
+              disabled={busy || !settingsForm.sms_notifications_enabled || !settingsForm.notification_phone.trim()}
+            >
+              <Send size={18} />
+              <span>Send Test SMS</span>
+            </button>
+          </div>
         </form>
       </section>
 
