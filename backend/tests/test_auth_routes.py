@@ -15,17 +15,24 @@ def sms_user(phone: str | None = "+15551112222", enabled: bool = True) -> UserMo
         email="test@example.com",
         password_hash="hash",
         notification_phone=phone,
+        notifications_enabled=True,
         sms_notifications_enabled=enabled,
     )
 
 
-def email_user(email: str = "test@example.com", notification_email: str | None = "alerts@example.com", enabled: bool = True) -> UserModel:
+def email_user(
+    email: str = "test@example.com",
+    notification_email: str | None = "alerts@example.com",
+    enabled: bool = True,
+    sms_enabled: bool = False,
+) -> UserModel:
     return UserModel(
         id=1,
         email=email,
         password_hash="hash",
         notification_email=notification_email,
         notifications_enabled=enabled,
+        sms_notifications_enabled=sms_enabled,
     )
 
 
@@ -80,6 +87,11 @@ class AuthRouteTests(unittest.TestCase):
             auth.send_test_email(email_user(enabled=False))
 
         self.assertEqual(context.exception.status_code, 400)
+
+        with self.assertRaises(HTTPException) as sms_context:
+            auth.send_test_email(email_user(sms_enabled=True))
+
+        self.assertEqual(sms_context.exception.status_code, 400)
 
     @patch("app.routes.auth.send_issue_alert", return_value=False)
     def test_send_test_email_reports_missing_provider_config(self, send_issue_alert: Mock) -> None:

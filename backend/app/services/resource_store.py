@@ -359,7 +359,7 @@ class ResourceStore:
         except ValueError:
             return None
         user = db.get(UserModel, user_id)
-        if not user or not user.notifications_enabled:
+        if not user or not user.notifications_enabled or user.sms_notifications_enabled:
             return None
         return user.notification_email or user.email
 

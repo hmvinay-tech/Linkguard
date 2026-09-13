@@ -62,6 +62,7 @@ function App() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const notifications = dashboard?.recent_notifications ?? [];
   const unreadCount = notifications.filter((notification) => !notification.read).length;
+  const alertChannel = settingsForm.sms_notifications_enabled ? "sms" : "email";
 
   useEffect(() => {
     if (token) refreshData();
@@ -280,13 +281,14 @@ function App() {
   }
 
   async function saveMonitoringSettings() {
+    const isSmsChannel = alertChannel === "sms";
     const updated = await request("/auth/me", {
       method: "PUT",
       body: JSON.stringify({
         notification_email: settingsForm.notification_email || null,
         notification_phone: settingsForm.notification_phone || null,
-        notifications_enabled: settingsForm.notifications_enabled,
-        sms_notifications_enabled: settingsForm.sms_notifications_enabled,
+        notifications_enabled: true,
+        sms_notifications_enabled: isSmsChannel,
         scan_frequency_minutes: Number(settingsForm.scan_frequency_minutes),
       }),
     });
@@ -541,39 +543,56 @@ function App() {
             <ShieldCheck size={20} />
             <h1>Monitoring</h1>
           </div>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={settingsForm.notifications_enabled}
-              onChange={(event) => setSettingsForm({ ...settingsForm, notifications_enabled: event.target.checked })}
-            />
-            Email alerts
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={settingsForm.sms_notifications_enabled}
-              onChange={(event) => setSettingsForm({ ...settingsForm, sms_notifications_enabled: event.target.checked })}
-            />
-            SMS alerts
-          </label>
-          <label>
-            Alert Email
-            <input
-              type="email"
-              value={settingsForm.notification_email}
-              onChange={(event) => setSettingsForm({ ...settingsForm, notification_email: event.target.value })}
-            />
-          </label>
-          <label>
-            Alert Phone
-            <input
-              type="tel"
-              value={settingsForm.notification_phone}
-              onChange={(event) => setSettingsForm({ ...settingsForm, notification_phone: event.target.value })}
-              placeholder="+15551234567"
-            />
-          </label>
+          <div className="alert-choice" role="radiogroup" aria-label="Alert method">
+            <button
+              className={alertChannel === "email" ? "choice-button active" : "choice-button"}
+              type="button"
+              onClick={() =>
+                setSettingsForm({
+                  ...settingsForm,
+                  notifications_enabled: true,
+                  sms_notifications_enabled: false,
+                })
+              }
+            >
+              <Mail size={18} />
+              <span>Email</span>
+            </button>
+            <button
+              className={alertChannel === "sms" ? "choice-button active" : "choice-button"}
+              type="button"
+              onClick={() =>
+                setSettingsForm({
+                  ...settingsForm,
+                  notifications_enabled: true,
+                  sms_notifications_enabled: true,
+                })
+              }
+            >
+              <Send size={18} />
+              <span>SMS</span>
+            </button>
+          </div>
+          {alertChannel === "email" ? (
+            <label>
+              Alert Email
+              <input
+                type="email"
+                value={settingsForm.notification_email}
+                onChange={(event) => setSettingsForm({ ...settingsForm, notification_email: event.target.value })}
+              />
+            </label>
+          ) : (
+            <label>
+              Alert Phone
+              <input
+                type="tel"
+                value={settingsForm.notification_phone}
+                onChange={(event) => setSettingsForm({ ...settingsForm, notification_phone: event.target.value })}
+                placeholder="+15551234567"
+              />
+            </label>
+          )}
           <label>
             Scan Every
             <select
@@ -595,7 +614,7 @@ function App() {
               className="ghost-button"
               type="button"
               onClick={sendTestSms}
-              disabled={busy || !settingsForm.sms_notifications_enabled || !settingsForm.notification_phone.trim()}
+              disabled={busy || alertChannel !== "sms" || !settingsForm.notification_phone.trim()}
             >
               <Send size={18} />
               <span>Send Test SMS</span>
@@ -604,7 +623,7 @@ function App() {
               className="ghost-button"
               type="button"
               onClick={sendTestEmail}
-              disabled={busy || !settingsForm.notifications_enabled || !settingsForm.notification_email.trim()}
+              disabled={busy || alertChannel !== "email" || !settingsForm.notification_email.trim()}
             >
               <Mail size={18} />
               <span>Send Test Email</span>

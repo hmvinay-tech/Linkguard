@@ -49,10 +49,10 @@ def update_me(
 
 @router.post("/me/test-sms", response_model=TestSmsResponse)
 def send_test_sms(user: UserModel = Depends(get_current_user)) -> TestSmsResponse:
-    if not user.sms_notifications_enabled or not user.notification_phone:
+    if not user.notifications_enabled or not user.sms_notifications_enabled or not user.notification_phone:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Save a phone number and enable SMS alerts first.",
+            detail="Save a phone number and choose SMS alerts first.",
         )
 
     try:
@@ -90,10 +90,10 @@ def send_test_sms(user: UserModel = Depends(get_current_user)) -> TestSmsRespons
 @router.post("/me/test-email", response_model=TestEmailResponse)
 def send_test_email(user: UserModel = Depends(get_current_user)) -> TestEmailResponse:
     recipient = user.notification_email or user.email
-    if not user.notifications_enabled or not recipient:
+    if not user.notifications_enabled or user.sms_notifications_enabled or not recipient:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Save an email address and enable email alerts first.",
+            detail="Save an email address and choose email alerts first.",
         )
 
     try:
