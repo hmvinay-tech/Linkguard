@@ -23,6 +23,7 @@ import {
 import "./styles.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+const DEMO_SEED_ENABLED = import.meta.env.VITE_DEMO_SEED_ENABLED === "true";
 const emptyForm = { name: "", url: "", category: "other", description: "" };
 const emptyAuth = { email: "", password: "" };
 const categories = [
@@ -229,6 +230,10 @@ function App() {
   }
 
   async function deleteResource(id) {
+    const resource = resources.find((item) => item.id === id);
+    if (!window.confirm(`Delete ${resource?.name || "this link"}? This cannot be undone.`)) {
+      return;
+    }
     setBusy(true);
     try {
       await request(`/resources/${id}`, { method: "DELETE" });
@@ -385,10 +390,12 @@ function App() {
         </div>
         <div className="topbar-actions">
           <span className="account-label">{user?.email}</span>
-          <button className="ghost-button" onClick={seedDemo} disabled={busy}>
-            <Plus size={18} />
-            <span>Demo Data</span>
-          </button>
+          {DEMO_SEED_ENABLED && (
+            <button className="ghost-button" onClick={seedDemo} disabled={busy}>
+              <Plus size={18} />
+              <span>Demo Data</span>
+            </button>
+          )}
           <button className="primary-button" onClick={scanAll} disabled={busy || resources.length === 0}>
             {busy ? <Loader2 size={18} className="spin" /> : <RotateCw size={18} />}
             <span>Scan All</span>

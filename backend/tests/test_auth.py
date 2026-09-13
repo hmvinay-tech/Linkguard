@@ -26,6 +26,28 @@ class AuthTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             auth.verify_access_token(token)
 
+    def test_auth_rate_limit_blocks_repeated_failures(self) -> None:
+        key = "login:rate@example.com"
+        auth._auth_attempts.clear()
+
+        for _ in range(auth.AUTH_RATE_LIMIT_ATTEMPTS):
+            auth._record_auth_failure(key)
+
+        with self.assertRaises(HTTPException) as error:
+            auth._check_auth_rate_limit(key)
+
+        self.assertEqual(error.exception.status_code, 429)
+        auth._auth_attempts.clear()
+
+    def test_auth_rate_limit_can_clear_after_success(self) -> None:
+        key = "login:clear@example.com"
+        auth._auth_attempts.clear()
+        auth._record_auth_failure(key)
+
+        auth._clear_auth_failures(key)
+
+        self.assertNotIn(key, auth._auth_attempts)
+
 
 if __name__ == "__main__":
     unittest.main()

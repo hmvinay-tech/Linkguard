@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
+from app.config import settings
 from app.models import UserModel
 from app.schemas import DemoSeedResult, ReadmeImportRequest, ReadmeImportResult, Resource, ResourceCreate, ResourceUpdate, ScanResult
 from app.services.readme_importer import extract_links_from_markdown
@@ -26,6 +27,8 @@ async def scan_all_resources(user: UserModel = Depends(get_current_user)) -> lis
 
 @router.post("/demo/seed", response_model=DemoSeedResult)
 def seed_demo_resources(user: UserModel = Depends(get_current_user)) -> DemoSeedResult:
+    if not settings.demo_seed_enabled:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Demo data is disabled")
     return store.seed_demo_resources(owner_key_for_user(user))
 
 

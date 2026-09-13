@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -22,6 +23,8 @@ from app.schemas import (
     ScanResult,
 )
 from app.services.notifier import send_issue_alert, send_issue_sms
+
+logger = logging.getLogger(__name__)
 
 
 DEMO_RESOURCES = [
@@ -330,12 +333,12 @@ class ResourceStore:
             recipient = self._notification_email_for_resource(db, resource)
             email_sent = send_issue_alert(resource.name, resource.url, severity, message, recipient)
         except Exception:
-            pass
+            logger.exception("Failed to send email alert for resource %s", resource.id)
         try:
             recipient_phone = self._notification_phone_for_resource(db, resource)
             sms_sent = send_issue_sms(resource.name, resource.url, severity, message, recipient_phone)
         except Exception:
-            pass
+            logger.exception("Failed to send SMS alert for resource %s", resource.id)
         db.add(
             NotificationModel(
                 owner_key=resource.owner_key,

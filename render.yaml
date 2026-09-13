@@ -16,9 +16,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: linkguard-db
-          property: connectionString
+        sync: false
+      - key: DEMO_SEED_ENABLED
+        value: false
       - key: BACKEND_CORS_ORIGINS
         value: https://linkguard-two.vercel.app,http://localhost:5173,http://127.0.0.1:5173
       - key: BACKEND_CORS_ORIGIN_REGEX

@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import os
+import time
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy import select
@@ -13,6 +14,10 @@ from app.config import settings
 from app.database import get_db
 from app.models import UserModel
 from app.schemas import TokenResponse, UserCreate, UserLogin, UserPublic, UserSettingsUpdate
+
+AUTH_RATE_LIMIT_ATTEMPTS = 8
+AUTH_RATE_LIMIT_WINDOW_SECONDS = 15 * 60
+_auth_attempts: dict[str, list[float]] = {}
 
 
 def normalize_email(email: str) -> str:
@@ -38,8 +43,10 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 def create_user(db: Session, payload: UserCreate) -> TokenResponse:
     email = normalize_email(payload.email)
+    _check_auth_rate_limit(f"signup:{email}")
     existing = db.scalar(select(UserModel).where(UserModel.email == email))
     if existing:
+        _record_auth_failure(f"signup:{email}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already registered")
 
     user = UserModel(email=email, password_hash=hash_password(payload.password), notification_email=email)
@@ -51,9 +58,13 @@ def create_user(db: Session, payload: UserCreate) -> TokenResponse:
 
 def authenticate_user(db: Session, payload: UserLogin) -> TokenResponse:
     email = normalize_email(payload.email)
+    rate_limit_key = f"login:{email}"
+    _check_auth_rate_limit(rate_limit_key)
     user = db.scalar(select(UserModel).where(UserModel.email == email))
     if not user or not verify_password(payload.password, user.password_hash):
+        _record_auth_failure(rate_limit_key)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    _clear_auth_failures(rate_limit_key)
     return _token_response(user)
 
 
@@ -139,6 +150,22 @@ def _user_public(user: UserModel) -> UserPublic:
 def _sign(payload_data: str) -> str:
     signature = hmac.new(settings.secret_key.encode("utf-8"), payload_data.encode("utf-8"), hashlib.sha256).digest()
     return _b64encode(signature)
+
+
+def _check_auth_rate_limit(key: str) -> None:
+    now = time.monotonic()
+    attempts = [attempt for attempt in _auth_attempts.get(key, []) if now - attempt < AUTH_RATE_LIMIT_WINDOW_SECONDS]
+    _auth_attempts[key] = attempts
+    if len(attempts) >= AUTH_RATE_LIMIT_ATTEMPTS:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many attempts. Try again later.")
+
+
+def _record_auth_failure(key: str) -> None:
+    _auth_attempts.setdefault(key, []).append(time.monotonic())
+
+
+def _clear_auth_failures(key: str) -> None:
+    _auth_attempts.pop(key, None)
 
 
 def _b64encode(data: bytes) -> str:

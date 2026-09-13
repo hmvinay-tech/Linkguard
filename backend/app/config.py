@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     crawler_timeout_seconds: float = 10.0
     crawler_max_redirects: int = 5
     crawler_max_response_bytes: int = 1_000_000
+    demo_seed_enabled: bool = True
     scheduled_scans_enabled: bool = True
     scheduled_scan_minutes: int = 15
     smtp_host: str | None = None

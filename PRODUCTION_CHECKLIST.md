@@ -7,12 +7,15 @@
 - Set `BACKEND_CORS_ORIGINS` to the exact deployed frontend URL.
 - Set `VITE_API_BASE_URL` to the deployed backend URL ending in `/api`.
 - Run `alembic upgrade head` during backend release.
-- Confirm signup, login, logout, add link, scan link, README import, and demo seed in the deployed app.
+- Confirm signup, login, logout, add link, scan link, and README import in the deployed app.
+- Keep public demo seeding disabled with `DEMO_SEED_ENABLED=false`.
+- Confirm destructive actions show a user confirmation before deleting data.
+- Confirm login/signup throttling is enabled to slow repeated attempts.
 
 ## Optional Production Features
 
 - Set SMTP variables to enable per-user issue-alert emails.
-- Set `SMS_WEBHOOK_URL` to enable per-user SMS alerts.
+- Set Twilio variables or `SMS_WEBHOOK_URL` to enable per-user SMS alerts.
 - Confirm broken-link alerts appear in the dashboard Notifications section.
 - Keep `SCHEDULED_SCANS_ENABLED=true` for automatic monitoring.
 - Start with `SCHEDULED_SCAN_MINUTES=60` for hourly scans, or `1440` for daily scans.
