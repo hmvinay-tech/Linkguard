@@ -99,6 +99,16 @@ class DashboardSummary(BaseModel):
     recent_notifications: list[Notification] = []
 
 
+class SystemStatus(BaseModel):
+    backend_live: bool
+    database_connected: bool
+    scheduled_scans_enabled: bool
+    scheduled_scan_minutes: int
+    scheduled_scan_token_configured: bool
+    email_configured: bool
+    sms_configured: bool
+
+
 class ReadmeImportRequest(BaseModel):
     markdown: str = Field(min_length=1, max_length=100_000)
 

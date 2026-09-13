@@ -52,6 +52,7 @@ function App() {
   });
   const [resources, setResources] = useState([]);
   const [dashboard, setDashboard] = useState(null);
+  const [systemStatus, setSystemStatus] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -153,17 +154,19 @@ function App() {
     setUser(null);
     setResources([]);
     setDashboard(null);
+    setSystemStatus(null);
     setScanHistory([]);
   }
 
   async function refreshData() {
     setBusy(true);
     try {
-      const [me, resourceData, dashboardData, historyData] = await Promise.all([
+      const [me, resourceData, dashboardData, historyData, statusData] = await Promise.all([
         request("/auth/me"),
         request("/resources"),
         request("/dashboard"),
         request("/dashboard/history"),
+        request("/dashboard/system-status"),
       ]);
       setUser(me);
       setSettingsForm({
@@ -176,6 +179,7 @@ function App() {
       setResources(resourceData);
       setDashboard(dashboardData);
       setScanHistory(historyData);
+      setSystemStatus(statusData);
       setMessage("");
     } catch (error) {
       setMessage(error.message);
@@ -512,6 +516,27 @@ function App() {
         </div>
       </section>
 
+      <section className="system-band">
+        <div className="section-title spread-title">
+          <div>
+            <Activity size={20} />
+            <h1>System Status</h1>
+          </div>
+          <span className="small-summary">Setup check</span>
+        </div>
+        <div className="system-grid">
+          <StatusItem label="Backend" ready={systemStatus?.backend_live} detail="Live API" />
+          <StatusItem label="Database" ready={systemStatus?.database_connected} detail="Storage connected" />
+          <StatusItem
+            label="Scheduled scans"
+            ready={systemStatus?.scheduled_scans_enabled && systemStatus?.scheduled_scan_token_configured}
+            detail={systemStatus ? `Every ${systemStatus.scheduled_scan_minutes} minutes` : "Checking"}
+          />
+          <StatusItem label="Email alerts" ready={systemStatus?.email_configured} detail="SMTP setup" />
+          <StatusItem label="SMS alerts" ready={systemStatus?.sms_configured} detail="Twilio/webhook setup" />
+        </div>
+      </section>
+
       <section className="insights-grid">
         <div className="chart-panel">
           <div className="section-title">
@@ -797,6 +822,18 @@ function Metric({ icon, label, value }) {
       <div>{icon}</div>
       <strong>{value}</strong>
       <span>{label}</span>
+    </div>
+  );
+}
+
+function StatusItem({ label, ready, detail }) {
+  return (
+    <div className={ready ? "status-item ready" : "status-item attention"}>
+      {ready ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+      <div>
+        <strong>{label}</strong>
+        <span>{detail}</span>
+      </div>
     </div>
   );
 }

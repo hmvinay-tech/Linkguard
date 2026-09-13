@@ -351,6 +351,55 @@ button:disabled {
   padding: 0 clamp(18px, 5vw, 56px) 28px;
 }
 
+.system-band {
+  padding: 0 clamp(18px, 5vw, 56px) 28px;
+}
+
+.system-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.status-item {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(221, 228, 237, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 14px 35px rgba(16, 36, 51, 0.06);
+  display: flex;
+  gap: 10px;
+  min-height: 76px;
+  padding: 14px;
+}
+
+.status-item.ready {
+  border-left: 4px solid #14746f;
+  color: #14746f;
+}
+
+.status-item.attention {
+  border-left: 4px solid #d97706;
+  color: #d97706;
+}
+
+.status-item div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.status-item strong {
+  color: #17202a;
+  font-size: 13px;
+}
+
+.status-item span {
+  color: #64748b;
+  font-size: 12px;
+}
+
 .spread-title {
   justify-content: space-between;
 }
@@ -779,6 +828,7 @@ button:disabled {
 
 @media (max-width: 900px) {
   .dashboard-grid,
+  .system-grid,
   .work-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -808,6 +858,7 @@ button:disabled {
 
 @media (max-width: 640px) {
   .dashboard-grid,
+  .system-grid,
   .work-grid,
   .link-toolbar {
     grid-template-columns: 1fr;
