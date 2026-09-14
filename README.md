@@ -4,6 +4,10 @@ LinkGuard is a Personal Web Presence Monitor for resumes, portfolios, GitHub pro
 
 It checks whether important professional URLs are healthy, redirected, unreachable, or broken, then turns the result into a simple Professional Presence Health Score.
 
+**Live App:** https://linkguard-two.vercel.app/
+
+**Live API:** https://linkguard-api-ocnq.onrender.com
+
 ## Live Demo
 
 - App: https://linkguard-two.vercel.app/
